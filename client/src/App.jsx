@@ -131,7 +131,7 @@ function Btn({ children, onClick, primary, ghost, disabled, className = "", styl
       onClick={onClick}
       disabled={disabled}
       style={primary && !disabled ? { background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, ...style } : style}
-      className={`px-5 py-[11px] rounded-[10px] text-[13px] font-bold tracking-tight whitespace-nowrap transition-all
+      className={`px-5 py-[11px] rounded-[10px] text-[13px] font-bold tracking-tight transition-all text-center
         ${disabled ? "bg-[#F8F9FC] text-[#64748B] border border-[#E2E8F0] cursor-not-allowed"
           : primary ? "text-white border-0 cursor-pointer"
           : ghost ? "bg-[#EEF0FF] text-[#4C3BCF] border border-[#4C3BCF]/30 cursor-pointer"
@@ -272,8 +272,7 @@ function NavBar({ page, setPage }) {
             <button key={m.id} onClick={() => go(m.id)}
               style={page === m.id ? { background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` } : {}}
               className={`px-[18px] py-2 rounded-[9px] border-0 text-[13px] tracking-tight transition-all cursor-pointer
-                ${page === m.id ? "text-white font-bold" : "font-medium bg-transparent"}`}
-              style2={{ color: page === m.id ? undefined : C.coolGray }}>
+                ${page === m.id ? "text-white font-bold" : "text-[#64748B] font-medium bg-transparent"}`}>
               {m.label}
             </button>
           ))}
@@ -512,10 +511,10 @@ function TransformPage() {
             {[{ label: "변환 강도", opts: INTS, val: intensity, set: setIntensity }, { label: "색상 기준", opts: COLS, val: colorMode, set: setColorMode }, { label: "출력 형식", opts: FMTS, val: fmt, set: setFmt }].map(g => (
               <div key={g.label}>
                 <div className="text-[11px] font-bold mb-2.5" style={{ color: C.coolGray }}>{g.label}</div>
-                <div className="flex gap-1">
+                <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${g.opts.length}, 1fr)` }}>
                   {g.opts.map((o, i) => (
                     <button key={o} onClick={() => g.set(i)}
-                      className="flex-1 py-2 rounded-[9px] text-[11px] font-semibold cursor-pointer transition-all"
+                      className="py-2 px-1 rounded-[9px] text-[10px] md:text-[11px] font-semibold cursor-pointer transition-all text-center leading-tight"
                       style={{ border: `1px solid ${g.val === i ? C.blueViolet : C.border}`, background: g.val === i ? C.blueViolet : "transparent", color: g.val === i ? C.white : C.coolGray }}>{o}</button>
                   ))}
                 </div>
