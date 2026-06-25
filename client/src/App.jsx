@@ -83,52 +83,61 @@ const TRANSFORM_STEPS = [
 ];
 
 const FILTER_TAGS = ["표지", "목차", "회사소개", "제안배경", "과업이해", "추진전략", "교육체계", "커리큘럼", "일정표", "운영방안", "강사진", "예산", "기대효과", "제안요약", "부록"];
+const INTS = ["가볍게 정리", "레이아웃 중심", "디자인 적극 반영"];
+const COLS = ["원본 색상 유지", "레퍼런스 색상 적용", "KMA 브랜드 톤"];
+const FMTS = ["PPTX", "PDF", "PPTX+PDF"];
+
+const DUMMY_DIAGNOSIS = {
+  completionScore: 62,
+  summary: "현재 제안서는 기본 구성은 갖추고 있으나 제안 배경과 과업 이해 장표가 누락되어 설득력이 부족합니다. 전체 11개 권장 장표 중 5개만 확인됩니다.",
+  currentFlow: DUMMY_CUR_FLOW,
+  recommendedFlow: DUMMY_REC_FLOW,
+  missingSlides: ["제안 배경", "고객 과업 이해", "HRD 추진 방향", "수행 경험", "부록"],
+  comments: ["제안 초반부에 '현황 진단' 또는 '제안 배경' 장표를 추가하면 설득력이 높아집니다.", "견적 장표가 너무 앞에 배치되어 제안 논리가 약해 보일 수 있습니다.", "수행 경험 장표가 없어 신뢰도 보완이 필요합니다."],
+  strengthPoints: ["교육과정 커리큘럼이 체계적으로 구성되어 있습니다.", "기대효과 장표가 명확하게 정리되어 있습니다."],
+};
 
 // ── Shared Components ──────────────────────────────────────────────────────
 
 function Tag({ children, color = C.blueViolet, small }) {
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: small ? "2px 8px" : "4px 11px", borderRadius: 99,
-      background: color + "18", color,
-      fontSize: small ? 10 : 11, fontWeight: 700,
-      letterSpacing: "-0.01em", border: `1px solid ${color}28`,
-      whiteSpace: "nowrap",
-    }}>{children}</span>
+    <span
+      style={{ background: color + "18", color, border: `1px solid ${color}28` }}
+      className={`inline-flex items-center rounded-full font-bold whitespace-nowrap tracking-tight ${small ? "px-2 py-0.5 text-[10px]" : "px-[11px] py-1 text-[11px]"}`}
+    >{children}</span>
   );
 }
 
-function Card({ children, style = {}, onClick, hoverable }) {
+function Card({ children, className = "", style = {}, onClick }) {
   const [hov, setHov] = useState(false);
   return (
-    <div onClick={onClick}
-      onMouseEnter={() => hoverable && setHov(true)}
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: C.white,
-        border: `1px solid ${hov ? C.blueViolet + "55" : C.border}`,
-        borderRadius: 16,
-        boxShadow: hov ? "0 8px 32px rgba(76,59,207,0.11)" : "0 1px 4px rgba(0,0,0,0.04)",
-        transition: "box-shadow 0.15s, border-color 0.15s",
-        cursor: onClick ? "pointer" : undefined,
+        border: `1px solid ${hov && onClick ? C.blueViolet + "55" : C.border}`,
+        boxShadow: hov && onClick ? "0 8px 32px rgba(76,59,207,0.11)" : "0 1px 4px rgba(0,0,0,0.04)",
         ...style,
-      }}>{children}</div>
+      }}
+      className={`bg-white rounded-2xl transition-all duration-150 ${onClick ? "cursor-pointer" : ""} ${className}`}
+    >{children}</div>
   );
 }
 
-function Btn({ children, onClick, primary, ghost, disabled, style = {} }) {
+function Btn({ children, onClick, primary, ghost, disabled, className = "", style = {} }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-      padding: "11px 20px", borderRadius: 10,
-      border: `1px solid ${disabled ? C.border : primary ? "transparent" : ghost ? C.blueViolet + "50" : C.border}`,
-      background: disabled ? C.lightGray
-        : primary ? `linear-gradient(135deg,${C.blueViolet},${C.purple})`
-        : ghost ? C.lavender : C.white,
-      color: disabled ? C.coolGray : primary ? C.white : ghost ? C.blueViolet : C.navyBlack,
-      fontSize: 13, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer",
-      letterSpacing: "-0.02em", whiteSpace: "nowrap", ...style,
-    }}>{children}</button>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={primary && !disabled ? { background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, ...style } : style}
+      className={`px-5 py-[11px] rounded-[10px] text-[13px] font-bold tracking-tight whitespace-nowrap transition-all
+        ${disabled ? "bg-[#F8F9FC] text-[#64748B] border border-[#E2E8F0] cursor-not-allowed"
+          : primary ? "text-white border-0 cursor-pointer"
+          : ghost ? "bg-[#EEF0FF] text-[#4C3BCF] border border-[#4C3BCF]/30 cursor-pointer"
+          : "bg-white text-[#0D1B2A] border border-[#E2E8F0] cursor-pointer"}
+        ${className}`}
+    >{children}</button>
   );
 }
 
@@ -136,28 +145,32 @@ function Spinner({ size = 34 }) {
   return (
     <>
       <style>{`@keyframes _spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ width: size, height: size, borderRadius: "50%", border: `3px solid ${C.lavender}`, borderTopColor: C.blueViolet, animation: "_spin 0.8s linear infinite", flexShrink: 0 }} />
+      <div style={{ width: size, height: size, border: `3px solid ${C.lavender}`, borderTopColor: C.blueViolet, animation: "_spin 0.8s linear infinite" }} className="rounded-full flex-shrink-0" />
     </>
   );
 }
 
 function ErrorBox({ msg }) {
   if (!msg) return null;
-  return <div style={{ background: C.danger + "12", border: `1px solid ${C.danger}40`, borderRadius: 10, padding: "12px 16px", color: C.danger, fontSize: 13, fontWeight: 600, marginBottom: 16 }}>⚠ {msg}</div>;
+  return (
+    <div className="rounded-[10px] px-4 py-3 text-[13px] font-semibold mb-4" style={{ background: C.danger + "12", border: `1px solid ${C.danger}40`, color: C.danger }}>
+      ⚠ {msg}
+    </div>
+  );
 }
 
 function PageHeader({ eyebrow, title, accent, sub }) {
   const idx = accent ? title.indexOf(accent) : -1;
   return (
-    <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "38px 72px 34px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ fontSize: 10, color: C.blueViolet, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>{eyebrow}</div>
-        <h1 style={{ fontSize: 34, fontWeight: 900, color: C.navyBlack, letterSpacing: "-0.045em", margin: "0 0 12px", lineHeight: 1.2 }}>
+    <div className="bg-white border-b border-[#E2E8F0] px-5 md:px-[72px] py-6 md:py-[38px]">
+      <div className="max-w-[1100px] mx-auto">
+        <div className="text-[10px] font-bold tracking-[0.12em] uppercase mb-3" style={{ color: C.blueViolet }}>{eyebrow}</div>
+        <h1 className="text-[26px] md:text-[34px] font-black tracking-tight mb-3 leading-snug" style={{ color: C.navyBlack }}>
           {idx >= 0
             ? <>{title.slice(0, idx)}<span style={{ color: C.blueViolet }}>{accent}</span>{title.slice(idx + accent.length)}</>
             : title}
         </h1>
-        {sub && <p style={{ fontSize: 14, color: C.coolGray, letterSpacing: "-0.01em", lineHeight: 1.65, margin: 0 }}>{sub}</p>}
+        {sub && <p className="text-[13px] md:text-[14px] leading-relaxed" style={{ color: C.coolGray }}>{sub}</p>}
       </div>
     </div>
   );
@@ -182,34 +195,34 @@ function FileUploadCard({ title, subtitle, fileInfo, onUpload, loading, accent =
   };
 
   return (
-    <Card style={{ padding: 24, flex: 1 }}>
+    <Card className="p-5 md:p-6 flex-1">
       <Tag color={accent} small>PPTX / PDF</Tag>
-      <div style={{ fontSize: 15, fontWeight: 800, color: C.navyBlack, letterSpacing: "-0.035em", marginTop: 10, marginBottom: 3 }}>{title}</div>
-      <div style={{ fontSize: 12, color: C.coolGray, marginBottom: 16, letterSpacing: "-0.01em" }}>{subtitle}</div>
+      <div className="text-[15px] font-extrabold tracking-tight mt-2.5 mb-1" style={{ color: C.navyBlack }}>{title}</div>
+      <div className="text-[12px] mb-4" style={{ color: C.coolGray }}>{subtitle}</div>
 
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "28px 0", gap: 12 }}>
-          <Spinner /><div style={{ fontSize: 12, color: C.coolGray }}>분석 중...</div>
+        <div className="flex flex-col items-center py-7 gap-3">
+          <Spinner /><div className="text-[12px]" style={{ color: C.coolGray }}>분석 중...</div>
         </div>
       ) : fileInfo ? (
-        <div style={{ background: C.paleBg, borderRadius: 12, padding: 16 }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
-            <div style={{ width: 44, height: 34, background: C.lavender, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+        <div className="rounded-xl p-4" style={{ background: C.paleBg }}>
+          <div className="flex gap-2.5 items-center mb-3">
+            <div className="w-11 h-[34px] rounded-[7px] flex items-center justify-center text-xl flex-shrink-0" style={{ background: C.lavender }}>
               {fileInfo.originalName?.endsWith(".pdf") ? "📕" : "📊"}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.navyBlack, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fileInfo.originalName}</div>
-              <div style={{ fontSize: 11, color: C.coolGray, marginTop: 2 }}>{fileInfo.estimatedSlides}장 추정 · {fileInfo.size}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-bold truncate" style={{ color: C.navyBlack }}>{fileInfo.originalName}</div>
+              <div className="text-[11px] mt-0.5" style={{ color: C.coolGray }}>{fileInfo.estimatedSlides}장 추정 · {fileInfo.size}</div>
             </div>
           </div>
           {fileInfo.textPreview && (
-            <div style={{ background: C.white, borderRadius: 8, padding: "8px 10px", fontSize: 10, color: C.coolGray, lineHeight: 1.6, maxHeight: 52, overflow: "hidden", marginBottom: 10 }}>
+            <div className="rounded-lg px-2.5 py-2 text-[10px] leading-relaxed max-h-[52px] overflow-hidden mb-2.5" style={{ background: C.white, color: C.coolGray }}>
               {fileInfo.textPreview.slice(0, 160)}...
             </div>
           )}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="flex justify-between items-center">
             <Tag color={C.success} small>✓ 업로드 완료</Tag>
-            <button onClick={() => onUpload(null, false)} style={{ background: "none", border: "none", fontSize: 11, color: C.coolGray, cursor: "pointer", fontWeight: 600 }}>다시 선택</button>
+            <button onClick={() => onUpload(null, false)} className="text-[11px] font-semibold bg-transparent border-0 cursor-pointer" style={{ color: C.coolGray }}>다시 선택</button>
           </div>
         </div>
       ) : (
@@ -217,11 +230,12 @@ function FileUploadCard({ title, subtitle, fileInfo, onUpload, loading, accent =
           onDragOver={e => { e.preventDefault(); setDrag(true); }}
           onDragLeave={() => setDrag(false)}
           onDrop={e => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files[0]); }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: `2px dashed ${drag ? accent : C.border}`, borderRadius: 12, padding: "38px 16px", cursor: "pointer", background: drag ? accent + "08" : "transparent", transition: "all 0.15s" }}>
-          <input type="file" accept=".pptx,.ppt,.pdf" style={{ display: "none" }} onChange={e => handle(e.target.files[0])} />
-          <div style={{ fontSize: 34, marginBottom: 10 }}>⬆</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.02em" }}>파일을 끌어오거나 클릭</div>
-          <div style={{ fontSize: 11, color: C.coolGray, marginTop: 4 }}>PPTX · PPT · PDF · 최대 50MB</div>
+          className="flex flex-col items-center justify-center rounded-xl p-8 cursor-pointer transition-all"
+          style={{ border: `2px dashed ${drag ? accent : C.border}`, background: drag ? accent + "08" : "transparent" }}>
+          <input type="file" accept=".pptx,.ppt,.pdf" className="hidden" onChange={e => handle(e.target.files[0])} />
+          <div className="text-3xl mb-2.5">⬆</div>
+          <div className="text-[13px] font-bold tracking-tight" style={{ color: C.navyBlack }}>파일을 끌어오거나 클릭</div>
+          <div className="text-[11px] mt-1" style={{ color: C.coolGray }}>PPTX · PPT · PDF · 최대 50MB</div>
         </label>
       )}
     </Card>
@@ -231,35 +245,79 @@ function FileUploadCard({ title, subtitle, fileInfo, onUpload, loading, accent =
 // ── NavBar ─────────────────────────────────────────────────────────────────
 
 function NavBar({ page, setPage }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const menus = [
     { id: "transform", label: "제안서 스타일 변환" },
     { id: "search", label: "장표 검색" },
     { id: "diagnosis", label: "구조 진단" },
   ];
+
+  const go = (id) => { setPage(id); setMenuOpen(false); };
+
   return (
-    <nav style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "0 72px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 200, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flexShrink: 0 }} onClick={() => setPage("home")}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, color: C.white, fontWeight: 900 }}>K</div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: C.navyBlack, letterSpacing: "-0.04em", lineHeight: 1.1 }}>KMA Proposal Transformer</div>
-          <div style={{ fontSize: 9, color: C.coolGray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>AI Proposal Workspace</div>
+    <>
+      <nav className="sticky top-0 z-[200] bg-white border-b border-[#E2E8F0] px-5 md:px-[72px] h-16 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2.5 cursor-pointer flex-shrink-0" onClick={() => go("home")}>
+          <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[15px] font-black text-white"
+            style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` }}>K</div>
+          <div className="hidden sm:block">
+            <div className="text-[13px] font-extrabold tracking-tight leading-none" style={{ color: C.navyBlack }}>KMA Proposal Transformer</div>
+            <div className="text-[9px] font-semibold tracking-[0.1em] uppercase mt-0.5" style={{ color: C.coolGray }}>AI Proposal Workspace</div>
+          </div>
         </div>
-      </div>
 
-      <div style={{ display: "flex", gap: 2, background: C.lightGray, borderRadius: 12, padding: 4 }}>
-        {menus.map(m => (
-          <button key={m.id} onClick={() => setPage(m.id)} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: page === m.id ? `linear-gradient(135deg,${C.blueViolet},${C.purple})` : "transparent", color: page === m.id ? C.white : C.coolGray, fontSize: 13, fontWeight: page === m.id ? 700 : 500, cursor: "pointer", letterSpacing: "-0.02em", transition: "all 0.15s" }}>{m.label}</button>
-        ))}
-      </div>
+        {/* Center menus — desktop */}
+        <div className="hidden md:flex gap-0.5 rounded-xl p-1" style={{ background: C.lightGray }}>
+          {menus.map(m => (
+            <button key={m.id} onClick={() => go(m.id)}
+              style={page === m.id ? { background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` } : {}}
+              className={`px-[18px] py-2 rounded-[9px] border-0 text-[13px] tracking-tight transition-all cursor-pointer
+                ${page === m.id ? "text-white font-bold" : "font-medium bg-transparent"}`}
+              style2={{ color: page === m.id ? undefined : C.coolGray }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-        {["작업 이력", "템플릿 관리", "관리자"].map(l => (
-          <button key={l} style={{ background: "none", border: "none", fontSize: 12, color: C.coolGray, cursor: "pointer", padding: "6px 10px", borderRadius: 8, fontWeight: 500, letterSpacing: "-0.02em" }}>{l}</button>
-        ))}
-        <div style={{ width: 1, height: 20, background: C.border, margin: "0 8px" }} />
-        <div style={{ width: 34, height: 34, borderRadius: "50%", background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: C.white, fontWeight: 700, cursor: "pointer" }}>김</div>
-      </div>
-    </nav>
+        {/* Right — desktop */}
+        <div className="hidden md:flex items-center gap-0.5">
+          {["작업 이력", "템플릿 관리", "관리자"].map(l => (
+            <button key={l} className="bg-transparent border-0 text-[12px] px-2.5 py-1.5 rounded-lg font-medium cursor-pointer" style={{ color: C.coolGray }}>{l}</button>
+          ))}
+          <div className="w-px h-5 mx-2" style={{ background: C.border }} />
+          <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[13px] text-white font-bold cursor-pointer"
+            style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` }}>김</div>
+        </div>
+
+        {/* Hamburger — mobile */}
+        <button className="md:hidden flex flex-col justify-center gap-[5px] p-2 bg-transparent border-0 cursor-pointer" onClick={() => setMenuOpen(o => !o)}>
+          <span className={`block w-5 h-0.5 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} style={{ background: C.navyBlack }} />
+          <span className={`block w-5 h-0.5 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} style={{ background: C.navyBlack }} />
+          <span className={`block w-5 h-0.5 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} style={{ background: C.navyBlack }} />
+        </button>
+      </nav>
+
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <div className="md:hidden fixed top-16 left-0 right-0 z-[199] bg-white shadow-lg" style={{ borderBottom: `1px solid ${C.border}` }}>
+          {menus.map(m => (
+            <button key={m.id} onClick={() => go(m.id)}
+              className="w-full text-left px-5 py-4 text-[14px] font-semibold bg-transparent border-0 cursor-pointer"
+              style={{ color: page === m.id ? C.blueViolet : C.navyBlack, borderBottom: `1px solid ${C.border}` }}>
+              {m.label}
+            </button>
+          ))}
+          {["작업 이력", "템플릿 관리", "관리자"].map(l => (
+            <button key={l} className="w-full text-left px-5 py-3.5 text-[13px] bg-transparent border-0 cursor-pointer" style={{ color: C.coolGray, borderBottom: `1px solid ${C.border}` }}>{l}</button>
+          ))}
+          <div className="px-5 py-4 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] text-white font-bold"
+              style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` }}>김</div>
+            <span className="text-[13px] font-semibold" style={{ color: C.navyBlack }}>김담당자</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -267,107 +325,116 @@ function NavBar({ page, setPage }) {
 
 function HomePage({ setPage }) {
   return (
-    <div style={{ minHeight: "100vh", background: C.paleBg }}>
-      <div style={{ background: `linear-gradient(135deg,${C.navy} 0%,${C.deepBlue} 50%,${C.blueViolet} 100%)`, padding: "72px 72px 80px", position: "relative", overflow: "hidden" }}>
+    <div className="min-h-screen" style={{ background: C.paleBg }}>
+      {/* Hero */}
+      <div className="relative overflow-hidden px-5 md:px-[72px] py-10 md:py-[72px]"
+        style={{ background: `linear-gradient(135deg,${C.navy} 0%,${C.deepBlue} 50%,${C.blueViolet} 100%)` }}>
         {[[280, -50, 360], [-70, 180, 260], [520, 270, 200]].map(([x, y, s], i) => (
-          <div key={i} style={{ position: "absolute", left: x, top: y, width: s, height: s, borderRadius: "50%", background: C.softViolet, opacity: 0.06, pointerEvents: "none" }} />
+          <div key={i} className="absolute rounded-full pointer-events-none" style={{ left: x, top: y, width: s, height: s, background: C.softViolet, opacity: 0.06 }} />
         ))}
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", position: "relative", zIndex: 1 }}>
+
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 items-center relative z-10">
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 99, padding: "5px 14px", marginBottom: 24 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.softViolet, display: "inline-block" }} />
-              <span style={{ fontSize: 10, color: C.softViolet, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>AI Proposal Workspace</span>
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 mb-6"
+              style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.3)" }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: C.softViolet }} />
+              <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: C.softViolet }}>AI Proposal Workspace</span>
             </div>
-            <h1 style={{ fontSize: 46, fontWeight: 900, color: C.white, lineHeight: 1.15, letterSpacing: "-0.045em", margin: "0 0 20px" }}>
+            <h1 className="text-[32px] md:text-[46px] font-black text-white leading-tight tracking-tight mb-5">
               흩어진 제안서를<br />
               <span style={{ color: C.softViolet }}>AI가 읽고,</span> 정리하고,<br />
               다시 디자인합니다
             </h1>
-            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, letterSpacing: "-0.01em", marginBottom: 36 }}>
-              Before 제안서와 Reference 파일을 업로드하면,<br />KMA 제안서 업무 흐름에 맞는 수정 가능한 PPTX 초안을 생성합니다.
+            <p className="text-[14px] md:text-[15px] leading-relaxed mb-9" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Before 제안서와 Reference 파일을 업로드하면,<br className="hidden md:block" />KMA 제안서 업무 흐름에 맞는 수정 가능한 PPTX 초안을 생성합니다.
             </p>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setPage("transform")} style={{ background: C.softViolet, color: C.white, border: "none", borderRadius: 12, padding: "13px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "-0.02em", boxShadow: "0 4px 20px rgba(167,139,250,0.35)" }}>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={() => setPage("transform")}
+                className="px-7 py-3.5 rounded-xl border-0 text-[14px] font-bold cursor-pointer text-white"
+                style={{ background: C.softViolet, boxShadow: "0 4px 20px rgba(167,139,250,0.35)" }}>
                 제안서 변환 시작하기 →
               </button>
-              <button onClick={() => setPage("search")} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "1px solid rgba(255,255,255,0.22)", borderRadius: 12, padding: "13px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: "-0.02em" }}>
+              <button onClick={() => setPage("search")}
+                className="px-7 py-3.5 rounded-xl text-[14px] font-semibold cursor-pointer text-white"
+                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.22)" }}>
                 장표 검색하기
               </button>
             </div>
           </div>
 
-          <div style={{ position: "relative", height: 270 }}>
-            <div style={{ position: "absolute", left: 0, top: 28, width: 158, padding: 14, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 16, backdropFilter: "blur(8px)" }}>
-              <div style={{ background: "rgba(255,255,255,0.14)", borderRadius: 99, padding: "3px 10px", fontSize: 9, color: C.white, fontWeight: 700, display: "inline-block", marginBottom: 10, letterSpacing: "0.07em" }}>BEFORE</div>
-              <div style={{ height: 66, background: "rgba(255,255,255,0.08)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📄</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 8 }}>기존 PPT / PDF</div>
-            </div>
-            <div style={{ position: "absolute", left: "50%", top: 6, transform: "translateX(-50%)", background: C.blueViolet, borderRadius: 99, padding: "5px 14px", fontSize: 9, color: C.white, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(76,59,207,0.5)", letterSpacing: "0.07em" }}>✦ AI MATCHING</div>
-            <div style={{ position: "absolute", left: "50%", top: 48, transform: "translateX(-50%)", width: 148, padding: 14, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(167,139,250,0.45)", borderRadius: 16, zIndex: 2, backdropFilter: "blur(8px)", boxShadow: "0 8px 32px rgba(76,59,207,0.22)" }}>
-              <div style={{ background: "rgba(167,139,250,0.22)", borderRadius: 99, padding: "3px 10px", fontSize: 9, color: C.softViolet, fontWeight: 700, display: "inline-block", marginBottom: 10, letterSpacing: "0.07em" }}>REFERENCE</div>
-              <div style={{ height: 66, background: "rgba(255,255,255,0.08)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>🗂</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 8 }}>스타일 레퍼런스</div>
-            </div>
-            <div style={{ position: "absolute", right: 0, top: 28, width: 158, padding: 14, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 16, backdropFilter: "blur(8px)" }}>
-              <div style={{ background: "rgba(16,185,129,0.18)", borderRadius: 99, padding: "3px 10px", fontSize: 9, color: "#34D399", fontWeight: 700, display: "inline-block", marginBottom: 10, letterSpacing: "0.07em" }}>AFTER ✓</div>
-              <div style={{ height: 66, background: "rgba(255,255,255,0.08)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>✨</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 8 }}>변환된 PPTX</div>
-            </div>
-            <div style={{ position: "absolute", left: "50%", bottom: 16, transform: "translateX(-50%)", display: "flex", gap: 6 }}>
-              {["Style Mapping", "Layout Extract"].map(t => (
-                <div key={t} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "3px 10px", fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{t}</div>
-              ))}
-            </div>
+          {/* Hero visual — desktop only */}
+          <div className="hidden md:block relative h-[270px]">
+            {[
+              { pos: { left: 0, top: 28 }, labelBg: "rgba(255,255,255,0.14)", labelColor: C.white, label: "BEFORE", icon: "📄", sub: "기존 PPT / PDF", bg: "rgba(255,255,255,0.1)", border: "rgba(255,255,255,0.18)" },
+              { pos: { left: "50%", top: 48, transform: "translateX(-50%)", zIndex: 2 }, labelBg: "rgba(167,139,250,0.22)", labelColor: C.softViolet, label: "REFERENCE", icon: "🗂", sub: "스타일 레퍼런스", bg: "rgba(255,255,255,0.14)", border: "rgba(167,139,250,0.45)", shadow: "0 8px 32px rgba(76,59,207,0.22)" },
+              { pos: { right: 0, top: 28 }, labelBg: "rgba(16,185,129,0.18)", labelColor: "#34D399", label: "AFTER ✓", icon: "✨", sub: "변환된 PPTX", bg: "rgba(255,255,255,0.1)", border: "rgba(16,185,129,0.3)" },
+            ].map((card, i) => (
+              <div key={i} className="absolute w-[158px] p-3.5 rounded-2xl backdrop-blur-sm"
+                style={{ ...card.pos, background: card.bg, border: `1px solid ${card.border}`, boxShadow: card.shadow }}>
+                <div className="rounded-full px-2.5 py-0.5 text-[9px] font-bold inline-block mb-2.5 tracking-[0.07em]"
+                  style={{ background: card.labelBg, color: card.labelColor }}>{card.label}</div>
+                <div className="h-[66px] rounded-[10px] flex items-center justify-center text-3xl" style={{ background: "rgba(255,255,255,0.08)" }}>{card.icon}</div>
+                <div className="text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.6)" }}>{card.sub}</div>
+              </div>
+            ))}
+            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 rounded-full px-3.5 py-1.5 text-[9px] text-white font-bold whitespace-nowrap tracking-[0.07em]"
+              style={{ background: C.blueViolet, boxShadow: "0 4px 20px rgba(76,59,207,0.5)" }}>✦ AI MATCHING</div>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 72px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 44 }}>
+      {/* Main content */}
+      <div className="max-w-[1100px] mx-auto px-5 md:px-[72px] py-10 md:py-12">
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
           {DUMMY_STATS.map(s => (
-            <Card key={s.label} style={{ padding: "20px 22px", display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 20, fontWeight: 900, color: s.color, letterSpacing: "-0.04em" }}>{s.value}</span>
+            <Card key={s.label} className="p-4 md:p-5 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: s.bg }}>
+                <span className="text-xl font-black" style={{ color: s.color }}>{s.value}</span>
               </div>
               <div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: C.navyBlack, letterSpacing: "-0.05em", lineHeight: 1 }}>{s.value}<span style={{ fontSize: 13 }}>{s.unit}</span></div>
-                <div style={{ fontSize: 11, color: C.coolGray, marginTop: 3 }}>{s.label}</div>
+                <div className="text-[20px] md:text-[22px] font-black tracking-tight leading-none" style={{ color: C.navyBlack }}>
+                  {s.value}<span className="text-[13px]">{s.unit}</span>
+                </div>
+                <div className="text-[11px] mt-1" style={{ color: C.coolGray }}>{s.label}</div>
               </div>
             </Card>
           ))}
         </div>
 
-        <div style={{ marginBottom: 44 }}>
-          <div style={{ fontSize: 10, color: C.blueViolet, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>핵심 기능</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.95fr 1fr", gap: 16, alignItems: "start" }}>
+        {/* Feature cards */}
+        <div className="mb-10">
+          <div className="text-[10px] font-bold tracking-[0.1em] uppercase mb-5" style={{ color: C.blueViolet }}>핵심 기능</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { id: "transform", icon: "✦", label: "제안서 스타일 변환", desc: "Before PPT와 Reference를 업로드하면 AI가 레이아웃을 분석해 PPTX 변환 리포트를 생성합니다.", color: C.blueViolet, mt: 0, badge: "가장 많이 사용" },
-              { id: "search", icon: "⊕", label: "장표 검색", desc: "여러 PPT/PDF 안에서 원하는 장표를 자연어로 검색해 위치를 찾아줍니다.", color: C.purple, mt: 22 },
-              { id: "diagnosis", icon: "◈", label: "구조 진단", desc: "HR 제안서 관점에서 흐름, 누락 장표, 완성도 점수를 분석하고 추천 구조를 제시합니다.", color: "#0891B2", mt: 10 },
+              { id: "transform", icon: "✦", label: "제안서 스타일 변환", desc: "Before PPT와 Reference를 업로드하면 AI가 레이아웃을 분석해 PPTX 변환 리포트를 생성합니다.", color: C.blueViolet, badge: "가장 많이 사용" },
+              { id: "search", icon: "⊕", label: "장표 검색", desc: "여러 PPT/PDF 안에서 원하는 장표를 자연어로 검색해 위치를 찾아줍니다.", color: C.purple },
+              { id: "diagnosis", icon: "◈", label: "구조 진단", desc: "HR 제안서 관점에서 흐름, 누락 장표, 완성도 점수를 분석하고 추천 구조를 제시합니다.", color: "#0891B2" },
             ].map(f => (
-              <Card key={f.id} hoverable style={{ padding: 28, marginTop: f.mt }} onClick={() => setPage(f.id)}>
-                {f.badge && <div style={{ marginBottom: 12 }}><Tag color={C.success} small>{f.badge}</Tag></div>}
-                <div style={{ width: 46, height: 46, borderRadius: 14, background: f.color + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: f.color, fontWeight: 900, marginBottom: 16 }}>{f.icon}</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: C.navyBlack, letterSpacing: "-0.035em", marginBottom: 8 }}>{f.label}</div>
-                <div style={{ fontSize: 13, color: C.coolGray, lineHeight: 1.65, letterSpacing: "-0.01em" }}>{f.desc}</div>
-                <div style={{ marginTop: 20, fontSize: 12, color: f.color, fontWeight: 700 }}>시작하기 →</div>
+              <Card key={f.id} className="p-6 md:p-7" onClick={() => setPage(f.id)}>
+                {f.badge && <div className="mb-3"><Tag color={C.success} small>{f.badge}</Tag></div>}
+                <div className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center text-xl font-black mb-4" style={{ background: f.color + "18", color: f.color }}>{f.icon}</div>
+                <div className="text-[15px] md:text-[16px] font-extrabold tracking-tight mb-2" style={{ color: C.navyBlack }}>{f.label}</div>
+                <div className="text-[13px] leading-relaxed" style={{ color: C.coolGray }}>{f.desc}</div>
+                <div className="mt-5 text-[12px] font-bold" style={{ color: f.color }}>시작하기 →</div>
               </Card>
             ))}
           </div>
         </div>
 
+        {/* Recent work */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: C.blueViolet, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>최근 작업</div>
-            <button style={{ background: "none", border: "none", fontSize: 12, color: C.coolGray, cursor: "pointer", fontWeight: 600 }}>전체 보기 →</button>
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-[10px] font-bold tracking-[0.1em] uppercase" style={{ color: C.blueViolet }}>최근 작업</div>
+            <button className="bg-transparent border-0 text-[12px] font-semibold cursor-pointer" style={{ color: C.coolGray }}>전체 보기 →</button>
           </div>
           <Card>
             {DUMMY_RECENT.map((item, i) => (
-              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: i < DUMMY_RECENT.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.lavender, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{item.icon}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                  <div style={{ fontSize: 11, color: C.coolGray, marginTop: 2 }}>{item.date}</div>
+              <div key={item.id} className="flex items-center gap-3.5 px-4 md:px-5 py-3.5" style={{ borderBottom: i < DUMMY_RECENT.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-lg flex-shrink-0" style={{ background: C.lavender }}>{item.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-bold tracking-tight truncate" style={{ color: C.navyBlack }}>{item.name}</div>
+                  <div className="text-[11px] mt-0.5" style={{ color: C.coolGray }}>{item.date}</div>
                 </div>
                 <Tag color={item.badgeColor} small>{item.badge}</Tag>
               </div>
@@ -381,10 +448,6 @@ function HomePage({ setPage }) {
 
 // ── Transform Page ─────────────────────────────────────────────────────────
 
-const INTS = ["가볍게 정리", "레이아웃 중심", "디자인 적극 반영"];
-const COLS = ["원본 색상 유지", "레퍼런스 색상 적용", "KMA 브랜드 톤"];
-const FMTS = ["PPTX", "PDF", "PPTX+PDF"];
-
 function TransformPage() {
   const [beforeInfo, setBeforeInfo] = useState(null);
   const [beforeLoading, setBL] = useState(false);
@@ -396,17 +459,10 @@ function TransformPage() {
   const [step, setStep] = useState(-1);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [filterReview, setFilterReview] = useState(false);
 
-  const hBefore = (info, loading, err) => {
-    setBL(loading);
-    if (err) setError(err);
-    else if (!loading) setBeforeInfo(info);
-  };
-  const hRef = (info, loading, err) => {
-    setRL(loading);
-    if (err) setError(err);
-    else if (!loading) setRefInfo(info);
-  };
+  const hBefore = (info, loading, err) => { setBL(loading); if (err) setError(err); else if (!loading) setBeforeInfo(info); };
+  const hRef = (info, loading, err) => { setRL(loading); if (err) setError(err); else if (!loading) setRefInfo(info); };
 
   const run = () => {
     setResult(null); setError(""); setStep(0);
@@ -430,31 +486,37 @@ function TransformPage() {
 
   const running = step >= 0 && step < 5;
   const rc = r => r === "높음" ? C.danger : r === "보통" ? C.warning : C.success;
+  const visibleSlides = filterReview ? result?.slides?.filter(s => s.reviewLevel !== "낮음") : result?.slides;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.paleBg }}>
+    <div className="min-h-screen" style={{ background: C.paleBg }}>
       <PageHeader eyebrow="제안서 스타일 변환" title="Before 제안서를 Reference 스타일로 다시 구성합니다" accent="Reference 스타일" sub="기존 제안서의 내용과 맥락은 유지하고, 레이아웃·색상·표·도형 스타일을 레퍼런스 기준으로 정리합니다." />
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 72px" }}>
+      <div className="max-w-[1100px] mx-auto px-5 md:px-[72px] py-8 md:py-9">
         <ErrorBox msg={error} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 76px 1fr", gap: 14, alignItems: "center", marginBottom: 24 }}>
+        {/* Upload */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_76px_1fr] gap-4 items-center mb-6">
           <FileUploadCard title="Before 제안서" subtitle="변환할 기존 제안서 파일" fileInfo={beforeInfo} onUpload={hBefore} loading={beforeLoading} />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: C.white, fontWeight: 700, boxShadow: "0 4px 14px rgba(76,59,207,0.28)" }}>AI</div>
-            <div style={{ fontSize: 20, color: C.border }}>→</div>
+          <div className="flex flex-row md:flex-col items-center justify-center gap-2 md:gap-2.5 py-2 md:py-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] text-white font-bold"
+              style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, boxShadow: "0 4px 14px rgba(76,59,207,0.28)" }}>AI</div>
+            <div className="text-xl rotate-90 md:rotate-0" style={{ color: C.border }}>→</div>
           </div>
           <FileUploadCard title="Reference 제안서" subtitle="따라 하고 싶은 스타일의 파일" fileInfo={refInfo} onUpload={hRef} loading={refLoading} accent={C.purple} />
         </div>
 
-        <Card style={{ padding: 24, marginBottom: 24 }}>
-          <div style={{ fontSize: 11, color: C.coolGray, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 18 }}>변환 옵션</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
+        {/* Options */}
+        <Card className="p-5 md:p-6 mb-6">
+          <div className="text-[11px] font-bold tracking-[0.07em] uppercase mb-4" style={{ color: C.coolGray }}>변환 옵션</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[{ label: "변환 강도", opts: INTS, val: intensity, set: setIntensity }, { label: "색상 기준", opts: COLS, val: colorMode, set: setColorMode }, { label: "출력 형식", opts: FMTS, val: fmt, set: setFmt }].map(g => (
               <div key={g.label}>
-                <div style={{ fontSize: 11, color: C.coolGray, fontWeight: 700, marginBottom: 10 }}>{g.label}</div>
-                <div style={{ display: "flex", gap: 4 }}>
+                <div className="text-[11px] font-bold mb-2.5" style={{ color: C.coolGray }}>{g.label}</div>
+                <div className="flex gap-1">
                   {g.opts.map((o, i) => (
-                    <button key={o} onClick={() => g.set(i)} style={{ flex: 1, padding: "8px 4px", borderRadius: 9, fontSize: 11, fontWeight: 600, cursor: "pointer", border: `1px solid ${g.val === i ? C.blueViolet : C.border}`, background: g.val === i ? C.blueViolet : "transparent", color: g.val === i ? C.white : C.coolGray, transition: "all 0.1s", letterSpacing: "-0.01em" }}>{o}</button>
+                    <button key={o} onClick={() => g.set(i)}
+                      className="flex-1 py-2 rounded-[9px] text-[11px] font-semibold cursor-pointer transition-all"
+                      style={{ border: `1px solid ${g.val === i ? C.blueViolet : C.border}`, background: g.val === i ? C.blueViolet : "transparent", color: g.val === i ? C.white : C.coolGray }}>{o}</button>
                   ))}
                 </div>
               </div>
@@ -463,26 +525,26 @@ function TransformPage() {
         </Card>
 
         {step === -1 && !result && (
-          <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <Btn primary onClick={run} disabled={!beforeInfo || !refInfo} style={{ padding: "15px 56px", fontSize: 15 }}>
+          <div className="text-center mb-7">
+            <Btn primary onClick={run} disabled={!beforeInfo || !refInfo} className="px-14 py-4 text-[15px]">
               {!beforeInfo || !refInfo ? "파일을 모두 업로드해주세요" : "✦ AI 변환 시작하기"}
             </Btn>
           </div>
         )}
 
         {running && (
-          <Card style={{ padding: 32, marginBottom: 24 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.03em", marginBottom: 28 }}>AI 분석 진행 중</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Card className="p-7 md:p-8 mb-6">
+            <div className="text-[14px] font-bold tracking-tight mb-7" style={{ color: C.navyBlack }}>AI 분석 진행 중</div>
+            <div className="flex flex-col gap-3.5">
               {TRANSFORM_STEPS.map((s, i) => {
-                const done = i < step;
-                const active = i === step;
+                const done = i < step, active = i === step;
                 return (
-                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 14, opacity: i > step ? 0.32 : 1, transition: "opacity 0.3s" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${done ? C.success : active ? C.blueViolet : C.border}`, background: done ? C.success : active ? C.blueViolet + "14" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.3s" }}>
-                      {done ? <span style={{ color: C.white, fontSize: 12 }}>✓</span> : active ? <Spinner size={14} /> : <span style={{ fontSize: 10, color: C.coolGray, fontWeight: 700 }}>{i + 1}</span>}
+                  <div key={s} className="flex items-center gap-3.5 transition-opacity duration-300" style={{ opacity: i > step ? 0.32 : 1 }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                      style={{ border: `2px solid ${done ? C.success : active ? C.blueViolet : C.border}`, background: done ? C.success : active ? C.blueViolet + "14" : "transparent" }}>
+                      {done ? <span className="text-white text-[12px]">✓</span> : active ? <Spinner size={14} /> : <span className="text-[10px] font-bold" style={{ color: C.coolGray }}>{i + 1}</span>}
                     </div>
-                    <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? C.blueViolet : done ? C.navyBlack : C.coolGray, letterSpacing: "-0.02em" }}>{s}</span>
+                    <span className="text-[13px] tracking-tight" style={{ fontWeight: active ? 700 : 500, color: active ? C.blueViolet : done ? C.navyBlack : C.coolGray }}>{s}</span>
                     {done && <Tag color={C.success} small>완료</Tag>}
                   </div>
                 );
@@ -493,92 +555,102 @@ function TransformPage() {
 
         {result && (
           <>
-            <Card style={{ padding: 28, marginBottom: 20 }}>
-              <div style={{ display: "flex", gap: 28 }}>
-                <div style={{ textAlign: "center", flexShrink: 0 }}>
-                  <div style={{ width: 96, height: 96, borderRadius: "50%", background: `conic-gradient(${C.blueViolet} 0% ${result.completionScore}%, ${C.border} ${result.completionScore}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 72, height: 72, borderRadius: "50%", background: C.white, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 24, fontWeight: 900, color: C.blueViolet, letterSpacing: "-0.04em" }}>{result.completionScore}</span>
-                      <span style={{ fontSize: 9, color: C.coolGray }}>점</span>
+            {/* Score + summary */}
+            <Card className="p-6 md:p-7 mb-5">
+              <div className="flex flex-col sm:flex-row gap-6">
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center"
+                    style={{ background: `conic-gradient(${C.blueViolet} 0% ${result.completionScore}%, ${C.border} ${result.completionScore}% 100%)` }}>
+                    <div className="w-[72px] h-[72px] rounded-full bg-white flex flex-col items-center justify-center">
+                      <span className="text-2xl font-black tracking-tight" style={{ color: C.blueViolet }}>{result.completionScore}</span>
+                      <span className="text-[9px]" style={{ color: C.coolGray }}>점</span>
                     </div>
                   </div>
-                  <div style={{ fontSize: 11, color: C.coolGray, marginTop: 10 }}>변환 완성도</div>
+                  <div className="text-[11px] mt-2.5" style={{ color: C.coolGray }}>변환 완성도</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: C.navyBlack, lineHeight: 1.7, marginBottom: 14, letterSpacing: "-0.01em" }}>{result.summary}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <div className="flex-1">
+                  <div className="text-[13px] leading-relaxed mb-3.5" style={{ color: C.navyBlack }}>{result.summary}</div>
+                  <div className="flex flex-col gap-2">
                     {result.improvements?.map((imp, i) => (
-                      <div key={i} style={{ fontSize: 12, color: C.navyBlack, background: C.lavender, borderRadius: 9, padding: "9px 14px", letterSpacing: "-0.01em" }}>💡 {imp}</div>
+                      <div key={i} className="text-[12px] rounded-[9px] px-3.5 py-2.5 leading-relaxed" style={{ background: C.lavender, color: C.navyBlack }}>💡 {imp}</div>
                     ))}
                   </div>
                 </div>
               </div>
             </Card>
 
-            <Card style={{ padding: 24, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.03em", marginBottom: 20 }}>장표 비교 미리보기</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 1fr", gap: 12, alignItems: "center" }}>
+            {/* Before/After */}
+            <Card className="p-5 md:p-6 mb-5">
+              <div className="text-[13px] font-bold tracking-tight mb-5" style={{ color: C.navyBlack }}>장표 비교 미리보기</div>
+              <div className="grid grid-cols-[1fr_52px_1fr] gap-3 items-center">
                 <div>
-                  <div style={{ fontSize: 10, color: C.coolGray, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>Before</div>
-                  <div style={{ height: 156, background: C.lightGray, borderRadius: 12, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 34 }}>📄</div>
-                    <div style={{ fontSize: 11, color: C.coolGray }}>{beforeInfo?.originalName || "원본 제안서"}</div>
+                  <div className="text-[10px] font-bold tracking-[0.06em] uppercase mb-2.5" style={{ color: C.coolGray }}>Before</div>
+                  <div className="h-[110px] md:h-[140px] rounded-xl flex flex-col items-center justify-center gap-2 border" style={{ background: C.lightGray, border: `1px solid ${C.border}` }}>
+                    <div className="text-3xl">📄</div>
+                    <div className="text-[11px] px-2 text-center truncate w-full" style={{ color: C.coolGray }}>{beforeInfo?.originalName || "원본 제안서"}</div>
                   </div>
                 </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 6px" }}>
-                    <span style={{ color: C.white, fontSize: 14 }}>✦</span>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` }}>
+                    <span className="text-white text-sm">✦</span>
                   </div>
-                  <div style={{ fontSize: 9, color: C.blueViolet, fontWeight: 700 }}>AI 변환</div>
+                  <div className="text-[9px] font-bold" style={{ color: C.blueViolet }}>AI 변환</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: C.success, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>After</div>
-                  <div style={{ height: 156, background: C.success + "08", borderRadius: 12, border: `1px solid ${C.success}30`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 34 }}>✨</div>
-                    <div style={{ fontSize: 11, color: C.success, fontWeight: 600 }}>변환 완료 · PPTX</div>
+                  <div className="text-[10px] font-bold tracking-[0.06em] uppercase mb-2.5" style={{ color: C.success }}>After</div>
+                  <div className="h-[110px] md:h-[140px] rounded-xl flex flex-col items-center justify-center gap-2 border" style={{ background: C.success + "08", border: `1px solid ${C.success}30` }}>
+                    <div className="text-3xl">✨</div>
+                    <div className="text-[11px] font-semibold" style={{ color: C.success }}>변환 완료 · PPTX</div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            <Card style={{ padding: 24, marginBottom: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.03em" }}>장표별 변환 리포트</div>
-                <div style={{ display: "flex", gap: 6 }}>
+            {/* Slide report */}
+            <Card className="p-5 md:p-6 mb-5">
+              <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
+                <div className="text-[13px] font-bold tracking-tight" style={{ color: C.navyBlack }}>장표별 변환 리포트</div>
+                <div className="flex gap-2 items-center flex-wrap">
                   <Tag color={C.success} small>완료 {result.slides.filter(s => s.reviewLevel === "낮음").length}장</Tag>
                   <Tag color={C.warning} small>검토 {result.slides.filter(s => s.reviewLevel !== "낮음").length}장</Tag>
+                  <button onClick={() => setFilterReview(f => !f)}
+                    className="text-[11px] font-semibold px-3 py-1 rounded-full cursor-pointer transition-all"
+                    style={{ border: `1px solid ${filterReview ? C.warning : C.border}`, background: filterReview ? C.warning + "12" : "transparent", color: filterReview ? C.warning : C.coolGray }}>
+                    {filterReview ? "전체 보기" : "검토 필요만 보기"}
+                  </button>
                 </div>
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>{["페이지", "장표 제목", "원본 유형", "적용 레이아웃", "검토 필요"].map(h => (
-                    <th key={h} style={{ textAlign: "left", fontSize: 10, color: C.coolGray, letterSpacing: "0.05em", textTransform: "uppercase", padding: "0 10px 12px 0", fontWeight: 700 }}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {result.slides.map((s, i) => (
-                    <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                      <td style={{ padding: "10px 10px 10px 0", fontSize: 12, fontWeight: 700, color: C.navyBlack }}>{s.page}</td>
-                      <td style={{ padding: "10px 10px 10px 0", fontSize: 13, fontWeight: 600, color: C.navyBlack, letterSpacing: "-0.01em", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</td>
-                      <td style={{ padding: "10px 10px 10px 0" }}><Tag color={C.coolGray} small>{s.originalType}</Tag></td>
-                      <td style={{ padding: "10px 10px 10px 0" }}><Tag color={C.blueViolet} small>{s.appliedLayout}</Tag></td>
-                      <td style={{ padding: "10px 0" }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                          <Tag color={rc(s.reviewLevel)} small>{s.reviewLevel}</Tag>
-                          {s.reviewNote && <div style={{ fontSize: 10, color: C.coolGray }}>{s.reviewNote}</div>}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[480px]">
+                  <thead>
+                    <tr>{["페이지", "장표 제목", "원본 유형", "적용 레이아웃", "검토 필요"].map(h => (
+                      <th key={h} className="text-left text-[10px] font-bold tracking-[0.05em] uppercase pb-3 pr-2.5" style={{ color: C.coolGray }}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {visibleSlides?.map((s, i) => (
+                      <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
+                        <td className="py-2.5 pr-2.5 text-[12px] font-bold" style={{ color: C.navyBlack }}>{s.page}</td>
+                        <td className="py-2.5 pr-2.5 text-[13px] font-semibold max-w-[140px] truncate" style={{ color: C.navyBlack }}>{s.title}</td>
+                        <td className="py-2.5 pr-2.5"><Tag color={C.coolGray} small>{s.originalType}</Tag></td>
+                        <td className="py-2.5 pr-2.5"><Tag color={C.blueViolet} small>{s.appliedLayout}</Tag></td>
+                        <td className="py-2.5">
+                          <div className="flex flex-col gap-1">
+                            <Tag color={rc(s.reviewLevel)} small>{s.reviewLevel}</Tag>
+                            {s.reviewNote && <div className="text-[10px]" style={{ color: C.coolGray }}>{s.reviewNote}</div>}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </Card>
 
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <Btn primary style={{ padding: "13px 32px" }}>⬇ PPTX 다운로드</Btn>
-              <Btn style={{ padding: "13px 24px" }}>PDF 다운로드</Btn>
-              <Btn style={{ padding: "13px 24px" }}>검토 필요 장표만 보기</Btn>
-              <Btn onClick={() => { setResult(null); setStep(-1); setBeforeInfo(null); setRefInfo(null); }} style={{ padding: "13px 24px" }}>다시 변환하기</Btn>
+            <div className="flex flex-wrap gap-2.5 justify-center">
+              <Btn primary className="px-8 py-3.5">⬇ PPTX 다운로드</Btn>
+              <Btn className="px-6 py-3.5">PDF 다운로드</Btn>
+              <Btn onClick={() => { setResult(null); setStep(-1); setBeforeInfo(null); setRefInfo(null); setFilterReview(false); }} className="px-6 py-3.5">다시 변환하기</Btn>
             </div>
           </>
         )}
@@ -631,99 +703,107 @@ function SearchPage() {
   const rc = r => r >= 85 ? C.success : r >= 70 ? C.warning : C.coolGray;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.paleBg }}>
+    <div className="min-h-screen" style={{ background: C.paleBg }}>
       <PageHeader eyebrow="장표 검색" title="예전에 만든 좋은 장표, 파일을 뒤지지 않고 찾습니다" accent="파일을 뒤지지 않고" sub="여러 PPT/PDF 파일을 업로드하면 AI가 각 장표를 분석해 원하는 장표의 위치를 찾아줍니다." />
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 72px" }}>
+      <div className="max-w-[1100px] mx-auto px-5 md:px-[72px] py-8 md:py-9">
         <ErrorBox msg={error} />
 
-        <Card style={{ padding: 20, marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        {/* File library */}
+        <Card className="p-4 md:p-5 mb-5">
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.02em" }}>파일 라이브러리</div>
-              <div style={{ fontSize: 11, color: C.coolGray, marginTop: 2 }}>{files.length}개 파일 · 분석 완료</div>
+              <div className="text-[13px] font-bold tracking-tight" style={{ color: C.navyBlack }}>파일 라이브러리</div>
+              <div className="text-[11px] mt-0.5" style={{ color: C.coolGray }}>{files.length}개 파일 · 분석 완료</div>
             </div>
-            <label style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})`, color: C.white, borderRadius: 9, padding: "9px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: "-0.01em" }}>
+            <label className="px-4 py-2 rounded-[9px] text-[12px] font-bold text-white cursor-pointer"
+              style={{ background: `linear-gradient(135deg,${C.blueViolet},${C.purple})` }}>
               + 파일 추가
-              <input type="file" accept=".pptx,.ppt,.pdf" style={{ display: "none" }} multiple onChange={e => Array.from(e.target.files).forEach(addFile)} />
+              <input type="file" accept=".pptx,.ppt,.pdf" className="hidden" multiple onChange={e => Array.from(e.target.files).forEach(addFile)} />
             </label>
           </div>
-          {fileLoading && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}><Spinner size={20} /><span style={{ fontSize: 12, color: C.coolGray }}>파일 분석 중...</span></div>}
-          {files.length === 0 && !fileLoading && <div style={{ textAlign: "center", padding: "28px 0", color: C.coolGray, fontSize: 13 }}>검색할 PPTX/PDF 파일을 추가하세요</div>}
+          {fileLoading && <div className="flex items-center gap-2.5 py-1.5"><Spinner size={20} /><span className="text-[12px]" style={{ color: C.coolGray }}>파일 분석 중...</span></div>}
+          {files.length === 0 && !fileLoading && <div className="text-center py-7 text-[13px]" style={{ color: C.coolGray }}>검색할 PPTX/PDF 파일을 추가하세요</div>}
           {files.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {files.map((f, i) => (
-                <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 14px", borderRadius: 11, border: `1px solid ${C.border}`, background: C.lightGray }}>
-                  <div style={{ fontSize: 20, flexShrink: 0 }}>{f.originalName.endsWith(".pdf") ? "📕" : "📊"}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.navyBlack, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.originalName}</div>
-                    <div style={{ display: "flex", gap: 5, marginTop: 4 }}>
+                <div key={i} className="flex gap-2.5 items-center px-3.5 py-2.5 rounded-[11px]" style={{ border: `1px solid ${C.border}`, background: C.lightGray }}>
+                  <div className="text-xl flex-shrink-0">{f.originalName.endsWith(".pdf") ? "📕" : "📊"}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-bold truncate" style={{ color: C.navyBlack }}>{f.originalName}</div>
+                    <div className="flex gap-1.5 mt-1 items-center">
                       <Tag color={C.success} small>분석 완료</Tag>
-                      <span style={{ fontSize: 10, color: C.coolGray }}>{f.estimatedSlides}장</span>
+                      <span className="text-[10px]" style={{ color: C.coolGray }}>{f.estimatedSlides}장</span>
                     </div>
                   </div>
-                  <button onClick={() => { setFiles(prev => prev.filter((_, j) => j !== i)); setResults(null); setSelected(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: C.coolGray, fontSize: 16 }}>×</button>
+                  <button onClick={() => { setFiles(prev => prev.filter((_, j) => j !== i)); setResults(null); setSelected(null); }}
+                    className="bg-transparent border-0 cursor-pointer text-lg leading-none flex-shrink-0" style={{ color: C.coolGray }}>×</button>
                 </div>
               ))}
             </div>
           )}
         </Card>
 
-        <Card style={{ padding: 20, marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+        {/* Search */}
+        <Card className="p-4 md:p-5 mb-4">
+          <div className="flex gap-2.5 mb-3.5">
             <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
               placeholder="예: 신입사원 온보딩 교육체계 장표 찾아줘"
-              style={{ flex: 1, padding: "13px 18px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 14, color: C.navyBlack, outline: "none", background: C.lightGray, letterSpacing: "-0.02em", fontFamily: "inherit" }} />
-            <Btn primary onClick={search} disabled={!query.trim() || files.length === 0 || searching} style={{ padding: "0 28px" }}>
+              className="flex-1 px-4 py-3 rounded-[10px] text-[14px] outline-none tracking-tight"
+              style={{ border: `1.5px solid ${C.border}`, background: C.lightGray, color: C.navyBlack }} />
+            <Btn primary onClick={search} disabled={!query.trim() || files.length === 0 || searching} className="px-5 md:px-6">
               {searching ? "검색 중..." : "검색"}
             </Btn>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div className="flex gap-1.5 flex-wrap">
             {["온보딩 교육체계", "리더십 역량모델", "교육 운영 프로세스", "조직문화 진단", "커리큘럼", "기대효과"].map(t => (
-              <button key={t} onClick={() => setQuery(t)} style={{ border: `1px solid ${C.border}`, borderRadius: 99, padding: "5px 14px", fontSize: 11, color: C.coolGray, background: C.white, cursor: "pointer", fontWeight: 600 }}>{t}</button>
+              <button key={t} onClick={() => setQuery(t)} className="rounded-full px-3.5 py-1.5 text-[11px] font-semibold bg-white cursor-pointer" style={{ border: `1px solid ${C.border}`, color: C.coolGray }}>{t}</button>
             ))}
           </div>
         </Card>
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+        {/* Filters */}
+        <div className="flex gap-1.5 flex-wrap mb-6">
           {FILTER_TAGS.map(tag => {
             const on = activeFilters.includes(tag);
             return (
               <button key={tag} onClick={() => setAF(prev => on ? prev.filter(t => t !== tag) : [...prev, tag])}
-                style={{ border: `1px solid ${on ? C.blueViolet : C.border}`, borderRadius: 99, padding: "5px 14px", fontSize: 11, color: on ? C.white : C.coolGray, background: on ? C.blueViolet : C.white, cursor: "pointer", fontWeight: 600, transition: "all 0.1s" }}>{tag}</button>
+                className="rounded-full px-3.5 py-1.5 text-[11px] font-semibold cursor-pointer transition-all"
+                style={{ border: `1px solid ${on ? C.blueViolet : C.border}`, background: on ? C.blueViolet : C.white, color: on ? C.white : C.coolGray }}>{tag}</button>
             );
           })}
         </div>
 
         {searching && (
-          <Card style={{ padding: 40, textAlign: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              <Spinner /><div style={{ fontSize: 13, color: C.coolGray }}>Claude AI가 장표를 분석하고 있습니다...</div>
+          <Card className="p-10 text-center">
+            <div className="flex flex-col items-center gap-3.5">
+              <Spinner /><div className="text-[13px]" style={{ color: C.coolGray }}>Claude AI가 장표를 분석하고 있습니다...</div>
             </div>
           </Card>
         )}
 
         {results && (
-          <div style={{ display: "grid", gridTemplateColumns: selected !== null ? "1fr 360px" : "1fr", gap: 20 }}>
+          <div className={selected !== null ? "grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5" : ""}>
             <div>
-              <div style={{ fontSize: 12, color: C.coolGray, marginBottom: 14 }}>
-                <span style={{ fontWeight: 700, color: C.navyBlack }}>{results.length}개</span>의 장표가 발견되었습니다
+              <div className="text-[12px] mb-3.5" style={{ color: C.coolGray }}>
+                <span className="font-bold" style={{ color: C.navyBlack }}>{results.length}개</span>의 장표가 발견되었습니다
               </div>
-              {results.length === 0 && <Card style={{ padding: 48, textAlign: "center", color: C.coolGray, fontSize: 14 }}>관련 장표를 찾지 못했습니다. 검색어를 바꿔보세요.</Card>}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {results.length === 0 && <Card className="p-12 text-center text-[14px]" style={{ color: C.coolGray }}>관련 장표를 찾지 못했습니다. 검색어를 바꿔보세요.</Card>}
+              <div className="flex flex-col gap-3">
                 {results.map((r, i) => (
-                  <Card key={i} hoverable style={{ padding: 18, borderColor: selected === i ? C.blueViolet : C.border }} onClick={() => setSelected(selected === i ? null : i)}>
-                    <div style={{ display: "flex", gap: 16 }}>
-                      <div style={{ width: 88, height: 62, background: `linear-gradient(135deg,${C.lavender},${C.paleBg})`, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, border: `1px solid ${C.border}` }}>📋</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
+                  <Card key={i} className="p-4 md:p-[18px]" style={{ borderColor: selected === i ? C.blueViolet : C.border }} onClick={() => setSelected(selected === i ? null : i)}>
+                    <div className="flex gap-3 md:gap-4">
+                      <div className="w-[68px] md:w-[88px] h-[50px] md:h-[62px] rounded-[9px] flex items-center justify-center text-2xl flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg,${C.lavender},${C.paleBg})`, border: `1px solid ${C.border}` }}>📋</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex gap-2 items-start mb-1.5 flex-wrap">
                           <Tag color={C.blueViolet} small>{r.slideType}</Tag>
-                          <span style={{ fontSize: 11, color: C.coolGray }}>{r.fileName} · {r.page}</span>
-                          <span style={{ marginLeft: "auto" }}><Tag color={rc(r.relevance)} small>관련도 {r.relevance}%</Tag></span>
+                          <span className="text-[11px] truncate" style={{ color: C.coolGray }}>{r.fileName} · {r.page}</span>
+                          <span className="ml-auto"><Tag color={rc(r.relevance)} small>관련도 {r.relevance}%</Tag></span>
                         </div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.03em", marginBottom: 5 }}>{r.title}</div>
-                        <div style={{ fontSize: 12, color: C.coolGray, lineHeight: 1.55 }}>{r.summary}</div>
-                        <div style={{ display: "flex", gap: 5, marginTop: 10, flexWrap: "wrap" }}>
-                          {r.keywords?.map(kw => <span key={kw} style={{ fontSize: 10, color: C.coolGray, background: C.lightGray, borderRadius: 6, padding: "2px 8px" }}># {kw}</span>)}
+                        <div className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: C.navyBlack }}>{r.title}</div>
+                        <div className="text-[12px] leading-relaxed" style={{ color: C.coolGray }}>{r.summary}</div>
+                        <div className="flex gap-1.5 mt-2.5 flex-wrap">
+                          {r.keywords?.map(kw => <span key={kw} className="text-[10px] rounded-[6px] px-2 py-0.5" style={{ color: C.coolGray, background: C.lightGray }}># {kw}</span>)}
                         </div>
                       </div>
                     </div>
@@ -733,24 +813,27 @@ function SearchPage() {
             </div>
 
             {selected !== null && results[selected] && (
-              <Card style={{ padding: 24, height: "fit-content", position: "sticky", top: 80 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.navyBlack }}>장표 상세</div>
-                  <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.coolGray, fontSize: 18 }}>✕</button>
-                </div>
-                <div style={{ height: 138, background: `linear-gradient(135deg,${C.lavender},${C.paleBg})`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 50, marginBottom: 16, border: `1px solid ${C.border}` }}>📋</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: C.navyBlack, letterSpacing: "-0.035em", marginBottom: 4 }}>{results[selected].title}</div>
-                <div style={{ fontSize: 11, color: C.coolGray, marginBottom: 12 }}>{results[selected].fileName} · {results[selected].page}</div>
-                <div style={{ marginBottom: 12 }}><Tag color={C.blueViolet}>{results[selected].slideType}</Tag></div>
-                <div style={{ fontSize: 12, color: C.coolGray, lineHeight: 1.65, marginBottom: 14 }}>{results[selected].summary}</div>
-                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 18 }}>
-                  {results[selected].keywords?.map(kw => <span key={kw} style={{ fontSize: 11, color: C.blueViolet, background: C.lavender, borderRadius: 6, padding: "3px 9px", fontWeight: 600 }}># {kw}</span>)}
-                </div>
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <Btn primary style={{ width: "100%", padding: "11px 0" }}>⬇ 해당 장표 다운로드</Btn>
-                  <Btn style={{ width: "100%", padding: "11px 0" }}>새 제안서에 추가</Btn>
-                </div>
-              </Card>
+              <div className="mt-4 lg:mt-0">
+                <Card className="p-5 md:p-6 lg:sticky lg:top-20">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-[13px] font-bold" style={{ color: C.navyBlack }}>장표 상세</div>
+                    <button onClick={() => setSelected(null)} className="bg-transparent border-0 cursor-pointer text-lg" style={{ color: C.coolGray }}>✕</button>
+                  </div>
+                  <div className="h-[120px] rounded-xl flex items-center justify-center text-5xl mb-4"
+                    style={{ background: `linear-gradient(135deg,${C.lavender},${C.paleBg})`, border: `1px solid ${C.border}` }}>📋</div>
+                  <div className="text-[15px] font-extrabold tracking-tight mb-1" style={{ color: C.navyBlack }}>{results[selected].title}</div>
+                  <div className="text-[11px] mb-3" style={{ color: C.coolGray }}>{results[selected].fileName} · {results[selected].page}</div>
+                  <div className="mb-3"><Tag color={C.blueViolet}>{results[selected].slideType}</Tag></div>
+                  <div className="text-[12px] leading-relaxed mb-3.5" style={{ color: C.coolGray }}>{results[selected].summary}</div>
+                  <div className="flex gap-1.5 flex-wrap mb-4">
+                    {results[selected].keywords?.map(kw => <span key={kw} className="text-[11px] rounded-[6px] px-2.5 py-1 font-semibold" style={{ color: C.blueViolet, background: C.lavender }}># {kw}</span>)}
+                  </div>
+                  <div className="flex flex-col gap-2" style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <Btn primary className="w-full py-3 justify-center">⬇ 해당 장표 다운로드</Btn>
+                    <Btn className="w-full py-3 justify-center">새 제안서에 추가</Btn>
+                  </div>
+                </Card>
+              </div>
             )}
           </div>
         )}
@@ -781,26 +864,16 @@ function DiagnosisPage({ setPage }) {
     finally { setFL(false); }
   };
 
-  const DUMMY_RESULT = {
-    completionScore: 62,
-    summary: "현재 제안서는 기본 구성은 갖추고 있으나 제안 배경과 과업 이해 장표가 누락되어 설득력이 부족합니다. 전체 11개 권장 장표 중 5개만 확인됩니다.",
-    currentFlow: DUMMY_CUR_FLOW,
-    recommendedFlow: DUMMY_REC_FLOW,
-    missingSlides: ["제안 배경", "고객 과업 이해", "HRD 추진 방향", "수행 경험", "부록"],
-    comments: ["제안 초반부에 '현황 진단' 또는 '제안 배경' 장표를 추가하면 설득력이 높아집니다.", "견적 장표가 너무 앞에 배치되어 제안 논리가 약해 보일 수 있습니다.", "수행 경험 장표가 없어 신뢰도 보완이 필요합니다."],
-    strengthPoints: ["교육과정 커리큘럼이 체계적으로 구성되어 있습니다.", "기대효과 장표가 명확하게 정리되어 있습니다."],
-  };
-
   const run = () => {
     setRunning(true); setResult(null); setError("");
     const isDummy = !fileInfo || fileInfo.fileId?.startsWith("demo");
     if (isDummy) {
-      setTimeout(() => { setResult(DUMMY_RESULT); setRunning(false); }, 2000);
+      setTimeout(() => { setResult(DUMMY_DIAGNOSIS); setRunning(false); }, 2000);
     } else {
       fetch(`${API}/diagnose`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId: fileInfo.fileId, fileName: fileInfo.originalName }) })
         .then(r => r.json())
         .then(data => { if (data.error) throw new Error(data.error); setResult(data); })
-        .catch(e => { setError(e.message); setResult(DUMMY_RESULT); })
+        .catch(e => { setError(e.message); setResult(DUMMY_DIAGNOSIS); })
         .finally(() => setRunning(false));
     }
   };
@@ -809,122 +882,131 @@ function DiagnosisPage({ setPage }) {
   const sl = s => s === "missing" ? "+ 추가 권장" : s === "moved" ? "↕ 순서 조정" : s === "warning" ? "⚠ 재검토" : "✓";
 
   return (
-    <div style={{ minHeight: "100vh", background: C.paleBg }}>
+    <div className="min-h-screen" style={{ background: C.paleBg }}>
       <PageHeader eyebrow="제안서 구조 진단" title="제안서의 흐름까지 AI가 함께 점검합니다" accent="AI가 함께 점검" sub="표지부터 기대효과, 견적, 부록까지 제안서의 설득 구조를 분석하고 개선 방향을 추천합니다." />
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 72px" }}>
+      <div className="max-w-[1100px] mx-auto px-5 md:px-[72px] py-8 md:py-9">
         <ErrorBox msg={error} />
 
-        <Card style={{ padding: 24, marginBottom: 24 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
+        {/* Upload + run */}
+        <Card className="p-4 md:p-6 mb-5">
+          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
             {fileLoading ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}><Spinner size={24} /><span style={{ fontSize: 13, color: C.coolGray }}>파일 분석 중...</span></div>
+              <div className="flex items-center gap-3 flex-1"><Spinner size={24} /><span className="text-[13px]" style={{ color: C.coolGray }}>파일 분석 중...</span></div>
             ) : fileInfo ? (
-              <div style={{ display: "flex", gap: 14, alignItems: "center", background: C.paleBg, borderRadius: 12, padding: "16px 20px" }}>
-                <div style={{ fontSize: 26 }}>✅</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.02em" }}>{fileInfo.originalName}</div>
-                  <div style={{ fontSize: 12, color: C.coolGray, marginTop: 3 }}>{fileInfo.estimatedSlides}장 추정 · {fileInfo.size}</div>
+              <div className="flex gap-3.5 items-center flex-1 rounded-xl px-4 py-3.5" style={{ background: C.paleBg }}>
+                <div className="text-2xl">✅</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14px] font-bold tracking-tight truncate" style={{ color: C.navyBlack }}>{fileInfo.originalName}</div>
+                  <div className="text-[12px] mt-0.5" style={{ color: C.coolGray }}>{fileInfo.estimatedSlides}장 추정 · {fileInfo.size}</div>
                 </div>
-                <button onClick={() => { setFileInfo(null); setResult(null); }} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: C.coolGray, fontSize: 12, fontWeight: 600 }}>다시 선택</button>
+                <button onClick={() => { setFileInfo(null); setResult(null); }} className="bg-transparent border-0 cursor-pointer text-[12px] font-semibold" style={{ color: C.coolGray }}>다시 선택</button>
               </div>
             ) : (
-              <label style={{ display: "flex", alignItems: "center", gap: 16, border: `2px dashed ${C.border}`, borderRadius: 12, padding: "20px 24px", cursor: "pointer" }}>
-                <input type="file" accept=".pptx,.ppt,.pdf" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
-                <div style={{ fontSize: 28 }}>📂</div>
+              <label className="flex items-center gap-4 rounded-xl px-5 py-5 cursor-pointer flex-1" style={{ border: `2px dashed ${C.border}` }}>
+                <input type="file" accept=".pptx,.ppt,.pdf" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+                <div className="text-2xl">📂</div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.navyBlack, letterSpacing: "-0.02em" }}>진단할 제안서를 업로드하세요</div>
-                  <div style={{ fontSize: 12, color: C.coolGray, marginTop: 2 }}>PPTX 또는 PDF · 클릭하거나 파일을 끌어오세요</div>
+                  <div className="text-[14px] font-bold tracking-tight" style={{ color: C.navyBlack }}>진단할 제안서를 업로드하세요</div>
+                  <div className="text-[12px] mt-0.5" style={{ color: C.coolGray }}>PPTX 또는 PDF · 클릭하거나 파일을 끌어오세요</div>
                 </div>
               </label>
             )}
-            <Btn primary onClick={run} disabled={!fileInfo || running} style={{ padding: "16px 28px", fontSize: 14 }}>
+            <Btn primary onClick={run} disabled={!fileInfo || running} className="py-4 px-7 text-[14px]">
               {running ? "분석 중..." : "◈ 진단 시작하기"}
             </Btn>
           </div>
         </Card>
 
         {!fileInfo && !result && !running && (
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div className="text-center mb-6">
             <button onClick={() => setFileInfo({ originalName: "KMA_공통_HR제안템플릿.pptx", estimatedSlides: 5, size: "2.4MB", fileId: "demo" })}
-              style={{ background: "none", border: `1px dashed ${C.blueViolet}`, borderRadius: 10, padding: "10px 22px", color: C.blueViolet, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              className="bg-transparent rounded-[10px] px-5 py-2.5 text-[12px] font-semibold cursor-pointer"
+              style={{ border: `1px dashed ${C.blueViolet}`, color: C.blueViolet }}>
               데모 데이터로 미리보기
             </button>
           </div>
         )}
 
         {running && (
-          <Card style={{ padding: 40, textAlign: "center", marginBottom: 24 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              <Spinner /><div style={{ fontSize: 13, color: C.coolGray }}>Claude AI가 제안서 구조를 분석하고 있습니다...</div>
+          <Card className="p-10 text-center mb-6">
+            <div className="flex flex-col items-center gap-3.5">
+              <Spinner /><div className="text-[13px]" style={{ color: C.coolGray }}>Claude AI가 제안서 구조를 분석하고 있습니다...</div>
             </div>
           </Card>
         )}
 
         {result && (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 20, marginBottom: 24 }}>
-              <Card style={{ padding: 28, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ fontSize: 10, color: C.coolGray, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600, marginBottom: 14 }}>제안서 완성도</div>
-                <div style={{ width: 100, height: 100, borderRadius: "50%", background: `conic-gradient(${C.blueViolet} 0% ${result.completionScore}%, ${C.border} ${result.completionScore}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                  <div style={{ width: 76, height: 76, borderRadius: "50%", background: C.white, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 26, fontWeight: 900, color: C.blueViolet, letterSpacing: "-0.04em" }}>{result.completionScore}</span>
-                    <span style={{ fontSize: 9, color: C.coolGray }}>/ 100</span>
+            <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-5 mb-5">
+              <Card className="p-7 flex flex-col items-center justify-center">
+                <div className="text-[10px] font-semibold tracking-[0.08em] uppercase mb-3.5" style={{ color: C.coolGray }}>제안서 완성도</div>
+                <div className="w-24 h-24 rounded-full flex items-center justify-center mb-4"
+                  style={{ background: `conic-gradient(${C.blueViolet} 0% ${result.completionScore}%, ${C.border} ${result.completionScore}% 100%)` }}>
+                  <div className="w-[76px] h-[76px] rounded-full bg-white flex flex-col items-center justify-center">
+                    <span className="text-[26px] font-black tracking-tight" style={{ color: C.blueViolet }}>{result.completionScore}</span>
+                    <span className="text-[9px]" style={{ color: C.coolGray }}>/ 100</span>
                   </div>
                 </div>
                 {result.missingSlides?.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", alignItems: "flex-start" }}>
-                    <div style={{ fontSize: 10, color: C.coolGray, fontWeight: 600, letterSpacing: "0.04em", marginBottom: 4 }}>보완 필요</div>
+                  <div className="flex flex-col gap-1.5 w-full items-start">
+                    <div className="text-[10px] font-semibold tracking-[0.04em] mb-1" style={{ color: C.coolGray }}>보완 필요</div>
                     {result.missingSlides.slice(0, 5).map(s => <Tag key={s} color={C.warning} small>{s}</Tag>)}
                   </div>
                 )}
               </Card>
-              <Card style={{ padding: 24 }}>
-                <div style={{ fontSize: 13, color: C.navyBlack, lineHeight: 1.7, marginBottom: 16, letterSpacing: "-0.01em" }}>{result.summary}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Card className="p-5 md:p-6">
+                <div className="text-[13px] leading-relaxed mb-4" style={{ color: C.navyBlack }}>{result.summary}</div>
+                <div className="flex flex-col gap-2">
                   {result.comments?.map((c, i) => (
-                    <div key={i} style={{ display: "flex", gap: 10, padding: "10px 14px", borderRadius: 10, background: i === 0 ? C.lavender : C.lightGray, border: `1px solid ${i === 0 ? C.blueViolet + "25" : C.border}` }}>
+                    <div key={i} className="flex gap-2.5 px-3.5 py-2.5 rounded-[10px]" style={{ background: i === 0 ? C.lavender : C.lightGray, border: `1px solid ${i === 0 ? C.blueViolet + "25" : C.border}` }}>
                       <span>{i === 0 ? "💡" : "⚠️"}</span>
-                      <span style={{ fontSize: 12, color: C.navyBlack, lineHeight: 1.6, letterSpacing: "-0.01em" }}>{c}</span>
+                      <span className="text-[12px] leading-relaxed" style={{ color: C.navyBlack }}>{c}</span>
                     </div>
                   ))}
                   {result.strengthPoints?.map((s, i) => (
-                    <div key={i} style={{ display: "flex", gap: 10, padding: "10px 14px", borderRadius: 10, background: C.success + "08", border: `1px solid ${C.success}30` }}>
+                    <div key={i} className="flex gap-2.5 px-3.5 py-2.5 rounded-[10px]" style={{ background: C.success + "08", border: `1px solid ${C.success}30` }}>
                       <span>✅</span>
-                      <span style={{ fontSize: 12, color: C.navyBlack, lineHeight: 1.6, letterSpacing: "-0.01em" }}>{s}</span>
+                      <span className="text-[12px] leading-relaxed" style={{ color: C.navyBlack }}>{s}</span>
                     </div>
                   ))}
                 </div>
               </Card>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-              <Card style={{ padding: 24 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
+            {/* Flow comparison */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <Card className="p-5 md:p-6">
+                <div className="flex gap-2 items-center mb-4">
                   <Tag color={C.coolGray}>현재 구조</Tag>
-                  <span style={{ fontSize: 11, color: C.coolGray }}>{result.currentFlow?.length}장</span>
+                  <span className="text-[11px]" style={{ color: C.coolGray }}>{result.currentFlow?.length}장</span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="flex flex-col gap-2">
                   {result.currentFlow?.map((s, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: s.status !== "ok" ? C.warning + "10" : C.lightGray, border: `1px solid ${s.status !== "ok" ? C.warning + "40" : C.border}` }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.coolGray, minWidth: 20 }}>{s.idx}</span>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.navyBlack, letterSpacing: "-0.02em" }}>{s.label}</span>
+                    <div key={i} className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px]"
+                      style={{ background: s.status !== "ok" ? C.warning + "10" : C.lightGray, border: `1px solid ${s.status !== "ok" ? C.warning + "40" : C.border}` }}>
+                      <span className="text-[11px] font-bold min-w-[20px]" style={{ color: C.coolGray }}>{s.idx}</span>
+                      <span className="flex-1 text-[13px] font-semibold tracking-tight" style={{ color: C.navyBlack }}>{s.label}</span>
                       <Tag color={sc(s.status)} small>{s.type}</Tag>
                       {s.status !== "ok" && <Tag color={C.warning} small>{sl(s.status)}</Tag>}
                     </div>
                   ))}
                 </div>
               </Card>
-
-              <Card style={{ padding: 24 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
+              <Card className="p-5 md:p-6">
+                <div className="flex gap-2 items-center mb-4">
                   <Tag color={C.blueViolet}>AI 추천 구조</Tag>
-                  <span style={{ fontSize: 11, color: C.coolGray }}>{result.recommendedFlow?.length}장</span>
+                  <span className="text-[11px]" style={{ color: C.coolGray }}>{result.recommendedFlow?.length}장</span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <div className="flex flex-col gap-1.5">
                   {result.recommendedFlow?.map((s, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 10, background: s.status === "missing" ? C.blueViolet + "08" : s.status === "moved" ? C.warning + "08" : C.lightGray, border: `1px solid ${s.status === "missing" ? C.blueViolet + "30" : s.status === "moved" ? C.warning + "30" : C.border}`, borderStyle: s.status === "missing" ? "dashed" : "solid" }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.coolGray, minWidth: 20 }}>{s.idx}</span>
-                      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: s.status === "missing" ? C.blueViolet : C.navyBlack, letterSpacing: "-0.02em" }}>{s.label}</span>
+                    <div key={i} className="flex items-center gap-2.5 px-3.5 py-2 rounded-[10px]"
+                      style={{
+                        background: s.status === "missing" ? C.blueViolet + "08" : s.status === "moved" ? C.warning + "08" : C.lightGray,
+                        border: `1px solid ${s.status === "missing" ? C.blueViolet + "30" : s.status === "moved" ? C.warning + "30" : C.border}`,
+                        borderStyle: s.status === "missing" ? "dashed" : "solid",
+                      }}>
+                      <span className="text-[11px] font-bold min-w-[20px]" style={{ color: C.coolGray }}>{s.idx}</span>
+                      <span className="flex-1 text-[12px] font-semibold tracking-tight" style={{ color: s.status === "missing" ? C.blueViolet : C.navyBlack }}>{s.label}</span>
                       <Tag color={sc(s.status)} small>{sl(s.status)}</Tag>
                     </div>
                   ))}
@@ -932,11 +1014,11 @@ function DiagnosisPage({ setPage }) {
               </Card>
             </div>
 
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <Btn primary style={{ padding: "13px 24px" }}>빠진 장표 템플릿 추가</Btn>
-              <Btn style={{ padding: "13px 24px" }}>제안서 순서 재구성</Btn>
-              <Btn style={{ padding: "13px 24px" }}>구조 진단 리포트 다운로드</Btn>
-              <Btn ghost onClick={() => setPage("transform")} style={{ padding: "13px 24px" }}>스타일 변환으로 이동 →</Btn>
+            <div className="flex flex-wrap gap-2.5 justify-center">
+              <Btn primary className="px-6 py-3.5">빠진 장표 템플릿 추가</Btn>
+              <Btn className="px-6 py-3.5">제안서 순서 재구성</Btn>
+              <Btn className="px-6 py-3.5">구조 진단 리포트 다운로드</Btn>
+              <Btn ghost onClick={() => setPage("transform")} className="px-6 py-3.5">스타일 변환으로 이동 →</Btn>
             </div>
           </>
         )}
@@ -950,7 +1032,7 @@ function DiagnosisPage({ setPage }) {
 export default function App() {
   const [page, setPage] = useState("home");
   return (
-    <div style={{ fontFamily: "'Pretendard Variable','Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif" }}>
+    <div>
       <NavBar page={page} setPage={setPage} />
       {page === "home" && <HomePage setPage={setPage} />}
       {page === "transform" && <TransformPage />}
