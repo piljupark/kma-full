@@ -8,7 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // .env 파일 읽기 (dotenv 없이 직접 파싱)
 const envPath = path.join(__dirname, '.env');
